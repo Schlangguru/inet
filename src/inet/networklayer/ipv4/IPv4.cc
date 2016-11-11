@@ -904,7 +904,7 @@ void IPv4::unregisterHook(INetfilter::IHook *hook)
     NetfilterBase::unregisterHook(hook);
 }
 
-void IPv4::dropQueuedDatagram(const INetworkDatagram *datagram)
+void IPv4::dropQueuedDatagram(const Packet *datagram)
 {
     Enter_Method("dropQueuedDatagram()");
     for (auto iter = queuedDatagramsForHooks.begin(); iter != queuedDatagramsForHooks.end(); iter++) {
@@ -916,12 +916,12 @@ void IPv4::dropQueuedDatagram(const INetworkDatagram *datagram)
     }
 }
 
-void IPv4::reinjectQueuedDatagram(const INetworkDatagram *datagram)
+void IPv4::reinjectQueuedDatagram(const Packet *datagram)
 {
     Enter_Method("reinjectDatagram()");
     for (auto iter = queuedDatagramsForHooks.begin(); iter != queuedDatagramsForHooks.end(); iter++) {
         if (iter->datagram == datagram) {
-            IPv4Datagram *datagram = iter->datagram;
+            auto *datagram = iter->datagram;
             take(datagram);
             switch (iter->hookType) {
                 case INetfilter::IHook::LOCALOUT:
@@ -954,7 +954,7 @@ void IPv4::reinjectQueuedDatagram(const INetworkDatagram *datagram)
     }
 }
 
-INetfilter::IHook::Result IPv4::datagramPreRoutingHook(INetworkDatagram *datagram, const InterfaceEntry *inIE, const InterfaceEntry *& outIE, L3Address& nextHopAddr)
+INetfilter::IHook::Result IPv4::datagramPreRoutingHook(Packet *datagram, const InterfaceEntry *inIE, const InterfaceEntry *& outIE, L3Address& nextHopAddr)
 {
     for (auto & elem : hooks) {
         IHook::Result r = elem.second->datagramPreRoutingHook(datagram, inIE, outIE, nextHopAddr);
@@ -980,7 +980,7 @@ INetfilter::IHook::Result IPv4::datagramPreRoutingHook(INetworkDatagram *datagra
     return INetfilter::IHook::ACCEPT;
 }
 
-INetfilter::IHook::Result IPv4::datagramForwardHook(INetworkDatagram *datagram, const InterfaceEntry *inIE, const InterfaceEntry *& outIE, L3Address& nextHopAddr)
+INetfilter::IHook::Result IPv4::datagramForwardHook(Packet *datagram, const InterfaceEntry *inIE, const InterfaceEntry *& outIE, L3Address& nextHopAddr)
 {
     for (auto & elem : hooks) {
         IHook::Result r = elem.second->datagramForwardHook(datagram, inIE, outIE, nextHopAddr);
@@ -1006,7 +1006,7 @@ INetfilter::IHook::Result IPv4::datagramForwardHook(INetworkDatagram *datagram, 
     return INetfilter::IHook::ACCEPT;
 }
 
-INetfilter::IHook::Result IPv4::datagramPostRoutingHook(INetworkDatagram *datagram, const InterfaceEntry *inIE, const InterfaceEntry *& outIE, L3Address& nextHopAddr)
+INetfilter::IHook::Result IPv4::datagramPostRoutingHook(Packet *datagram, const InterfaceEntry *inIE, const InterfaceEntry *& outIE, L3Address& nextHopAddr)
 {
     for (auto & elem : hooks) {
         IHook::Result r = elem.second->datagramPostRoutingHook(datagram, inIE, outIE, nextHopAddr);
@@ -1088,7 +1088,7 @@ bool IPv4::isNodeUp()
     return !nodeStatus || nodeStatus->getState() == NodeStatus::UP;
 }
 
-INetfilter::IHook::Result IPv4::datagramLocalInHook(INetworkDatagram *datagram, const InterfaceEntry *inIE)
+INetfilter::IHook::Result IPv4::datagramLocalInHook(Packet *datagram, const InterfaceEntry *inIE)
 {
     for (auto & elem : hooks) {
         IHook::Result r = elem.second->datagramLocalInHook(datagram, inIE);
@@ -1118,7 +1118,7 @@ INetfilter::IHook::Result IPv4::datagramLocalInHook(INetworkDatagram *datagram, 
     return INetfilter::IHook::ACCEPT;
 }
 
-INetfilter::IHook::Result IPv4::datagramLocalOutHook(INetworkDatagram *datagram, const InterfaceEntry *& outIE, L3Address& nextHopAddr)
+INetfilter::IHook::Result IPv4::datagramLocalOutHook(Packet *datagram, const InterfaceEntry *& outIE, L3Address& nextHopAddr)
 {
     for (auto & elem : hooks) {
         IHook::Result r = elem.second->datagramLocalOutHook(datagram, outIE, nextHopAddr);
@@ -1131,7 +1131,7 @@ INetfilter::IHook::Result IPv4::datagramLocalOutHook(INetworkDatagram *datagram,
                 return r;
 
             case INetfilter::IHook::QUEUE:
-                queuedDatagramsForHooks.push_back(QueuedDatagramForHook(dynamic_cast<IPv4Datagram *>(datagram), nullptr, outIE, nextHopAddr.toIPv4(), INetfilter::IHook::LOCALOUT));
+                queuedDatagramsForHooks.push_back(QueuedDatagramForHook(datagram, nullptr, outIE, nextHopAddr.toIPv4(), INetfilter::IHook::LOCALOUT));
                 return r;
 
             case INetfilter::IHook::STOLEN:

@@ -51,11 +51,11 @@ class INET_API IPv4 : public QueueBase, public NetfilterBase, public ILifecycle,
     class QueuedDatagramForHook
     {
       public:
-        QueuedDatagramForHook(IPv4Datagram *datagram, const InterfaceEntry *inIE, const InterfaceEntry *outIE, const IPv4Address& nextHopAddr, IHook::Type hookType) :
+        QueuedDatagramForHook(Packet *datagram, const InterfaceEntry *inIE, const InterfaceEntry *outIE, const IPv4Address& nextHopAddr, IHook::Type hookType) :
             datagram(datagram), inIE(inIE), outIE(outIE), nextHopAddr(nextHopAddr), hookType(hookType) {}
         virtual ~QueuedDatagramForHook() {}
 
-        IPv4Datagram *datagram = nullptr;
+        Packet *datagram = nullptr;
         const InterfaceEntry *inIE = nullptr;
         const InterfaceEntry *outIE = nullptr;
         IPv4Address nextHopAddr;
@@ -244,27 +244,27 @@ class INET_API IPv4 : public QueueBase, public NetfilterBase, public ILifecycle,
     /**
      * called before a packet arriving from the network is routed
      */
-    IHook::Result datagramPreRoutingHook(INetworkDatagram *datagram, const InterfaceEntry *inIE, const InterfaceEntry *& outIE, L3Address& nextHopAddr);
+    IHook::Result datagramPreRoutingHook(Packet *datagram, const InterfaceEntry *inIE, const InterfaceEntry *& outIE, L3Address& nextHopAddr);
 
     /**
      * called before a packet arriving from the network is delivered via the network
      */
-    IHook::Result datagramForwardHook(INetworkDatagram *datagram, const InterfaceEntry *inIE, const InterfaceEntry *& outIE, L3Address& nextHopAddr);
+    IHook::Result datagramForwardHook(Packet *datagram, const InterfaceEntry *inIE, const InterfaceEntry *& outIE, L3Address& nextHopAddr);
 
     /**
      * called before a packet is delivered via the network
      */
-    IHook::Result datagramPostRoutingHook(INetworkDatagram *datagram, const InterfaceEntry *inIE, const InterfaceEntry *& outIE, L3Address& nextHopAddr);
+    IHook::Result datagramPostRoutingHook(Packet *datagram, const InterfaceEntry *inIE, const InterfaceEntry *& outIE, L3Address& nextHopAddr);
 
     /**
      * called before a packet arriving from the network is delivered locally
      */
-    IHook::Result datagramLocalInHook(INetworkDatagram *datagram, const InterfaceEntry *inIE);
+    IHook::Result datagramLocalInHook(Packet *datagram, const InterfaceEntry *inIE);
 
     /**
      * called before a packet arriving locally is delivered
      */
-    IHook::Result datagramLocalOutHook(INetworkDatagram *datagram, const InterfaceEntry *& outIE, L3Address& nextHopAddr);
+    IHook::Result datagramLocalOutHook(Packet *datagram, const InterfaceEntry *& outIE, L3Address& nextHopAddr);
 
   public:
     /**
@@ -280,12 +280,12 @@ class INET_API IPv4 : public QueueBase, public NetfilterBase, public ILifecycle,
     /**
      * drop a previously queued datagram
      */
-    void dropQueuedDatagram(const INetworkDatagram *datagram) override;
+    virtual void dropQueuedDatagram(const Packet *datagram) override;
 
     /**
      * re-injects a previously queued datagram
      */
-    void reinjectQueuedDatagram(const INetworkDatagram *datagram) override;
+    virtual void reinjectQueuedDatagram(const Packet *datagram) override;
 
     /**
      * ILifecycle method
