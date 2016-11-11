@@ -60,36 +60,34 @@ void ICMP::handleMessage(cMessage *msg)
         throw cRuntimeError("Message %s(%s) arrived in unknown '%s' gate", msg->getName(), msg->getClassName(), msg->getArrivalGate()->getName());
 }
 
-void ICMP::sendErrorMessage(IPv4Datagram *origDatagram, int inputInterfaceId, ICMPType type, ICMPCode code)
+void ICMP::sendErrorMessage(Packet *packet, int inputInterfaceId, ICMPType type, ICMPCode code)
 {
     Enter_Method("sendErrorMessage(datagram, type=%d, code=%d)", type, code);
 
-    // get ownership
-    take(origDatagram);
-
+    const auto& origDatagram = packet->peekHeader<IPv4Datagram>();
     IPv4Address origSrcAddr = origDatagram->getSrcAddress();
     IPv4Address origDestAddr = origDatagram->getDestAddress();
 
     // don't send ICMP error messages in response to broadcast or multicast messages
     if (origDestAddr.isMulticast() || origDestAddr.isLimitedBroadcastAddress() || possiblyLocalBroadcast(origDestAddr, inputInterfaceId)) {
         EV_DETAIL << "won't send ICMP error messages for broadcast/multicast message " << origDatagram << endl;
-        delete origDatagram;
+        delete packet;
         return;
     }
 
     // don't send ICMP error messages response to unspecified, broadcast or multicast addresses
     if (origSrcAddr.isMulticast() || origSrcAddr.isLimitedBroadcastAddress() || possiblyLocalBroadcast(origSrcAddr, inputInterfaceId)) {
         EV_DETAIL << "won't send ICMP error messages to broadcast/multicast address, message " << origDatagram << endl;
-        delete origDatagram;
+        delete packet;
         return;
     }
 
     // do not reply with error message to error message
     if (origDatagram->getTransportProtocol() == IP_PROT_ICMP) {
-        ICMPMessage *recICMPMsg = check_and_cast<ICMPMessage *>(origDatagram->getEncapsulatedPacket());
+        const auto& recICMPMsg = packet->peekHeaderAt<ICMPMessage>(packet->getHeaderPosition() + origDatagram->getHeaderLength());
         if (!isIcmpInfoType(recICMPMsg->getType())) {
             EV_DETAIL << "ICMP error received -- do not reply to it" << endl;
-            delete origDatagram;
+            delete packet;
             return;
         }
     }

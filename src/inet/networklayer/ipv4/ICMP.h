@@ -22,6 +22,7 @@
 //  Cleanup and rewrite: Andras Varga, 2004
 
 #include "inet/common/INETDefs.h"
+#include "inet/common/packet/Packet.h"
 #include "inet/networklayer/ipv4/IIPv4RoutingTable.h"
 
 #include "inet/common/IProtocolRegistrationListener.h"
@@ -54,7 +55,7 @@ class INET_API ICMP : public cSimpleModule, public IProtocolRegistrationListener
      * to broadcast or multicast packets -- in that case it will simply delete the packet.
      * Kludge: if inputInterfaceId cannot be determined, pass in -1.
      */
-    virtual void sendErrorMessage(IPv4Datagram *datagram, int inputInterfaceId, ICMPType type, ICMPCode code);
+    virtual void sendErrorMessage(Packet *packet, int inputInterfaceId, ICMPType type, ICMPCode code);
 
     /**
      * This method can be called from other modules to send an ICMP error packet
